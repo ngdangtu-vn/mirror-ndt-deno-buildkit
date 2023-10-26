@@ -1,0 +1,13 @@
+{
+  "imports": {
+    "kit/": "./mods/",
+    "test-runner": "https://deno.land/std@0.204.0/assert/mod.ts"
+  },
+  "test": {
+    "exclude": [".repo/"]
+  },
+  "fmt": {
+    "singleQuote": true,
+    "semiColons": false
+  }
+}

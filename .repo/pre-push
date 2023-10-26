@@ -1,0 +1,57 @@
+#!/bin/sh
+# 
+# This hook creates a mirror repository to Github.
+# In other words, it send a copy from Gitlab to Github.
+# Reason behind this hook may be because the only way to
+# get into deno/x is through Github. While it sounds a
+# bit monopoly and dictator, but indeed it is... 
+#
+# pre-push hook is called by "git push" after it has checked
+# the remote status, but before anything has been pushed.
+# If this script exits with a non-zero status, nothing
+# will be pushed.
+#
+# 
+# Credit
+# https://stackoverflow.com/a/22266000
+
+
+MIRROR=github-mirror
+
+# pre-push.sample
+remote="$1"
+url="$2"
+
+# prevent infinitive loop of mirror pushing
+test "$remote" = "$MIRROR" && exit 0
+
+# 1. Run one last test
+make test
+if [ $? != 0 ]
+then
+    echo "Test failed, do you wish to continue pushing?"
+    until [ "$confirm" = "y" -o "$confirm" = "n" ]
+    do
+        # explain /dev/tty: https://stackoverflow.com/a/45495062
+        read -p "Yes & keep pushing/No to play safe? [y/n] " confirm < /dev/tty
+        if [ "$confirm" = "n" ]
+        then
+            echo "I'm proud of you man! (つ≧▽≦)つ"
+            exit 127
+        fi
+    done
+    echo "Uggh... Back off, you prevert!!! (⁄ ⁄>⁄ ▽ ⁄<⁄ ⁄)"
+fi
+
+# 2. Double check with Lint
+deno lint
+if [ $? != 0 ]
+then
+    echo "Deno Linter found some trouble. Please either disable or fix it before you continue... skip is not an option for this case ( ′～‵ )"
+    exit 1
+fi
+
+# 3. Update mirror after the main push if mirror is available
+git remote show | grep -q "$MIRROR" && git push --mirror --force "$MIRROR"
+
+exit 0
